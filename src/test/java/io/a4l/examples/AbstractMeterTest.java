@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.Builder;
@@ -112,7 +111,7 @@ public abstract class AbstractMeterTest {
 
       Meter meter = findOneByExactTagkeys(expectedMeterName, expectedTags);
 
-      Assertions.assertNotNull(meter, () -> expectedMeterName);
+      Assertions.assertNotNull(meter, expectedMeterName);
 
       Id id = meter.getId();
 
@@ -183,13 +182,14 @@ public abstract class AbstractMeterTest {
 
       List<Tag> tags = id.getTags();
       if (!tags.isEmpty()) {
-        assertEquals(true, (null != expectedTags),
-            () -> "No tags expected");
-        assertEquals(expectedTags.size(), tags.size(), () -> {
-          return String
-              .format("expectedTags=%s, actualTags=%s",
-                  expectedTags.toString(), meter.getId().getTags().toString());
-        });
+        Assertions
+            .assertNotNull(expectedTags, "No tags expected");
+        Assertions
+            .assertEquals(expectedTags.size(), tags.size(), () -> {
+              return String
+                  .format("expectedTags=%s, actualTags=%s",
+                      expectedTags.toString(), meter.getId().getTags().toString());
+            });
       }
 
       expectedTags
@@ -198,17 +198,18 @@ public abstract class AbstractMeterTest {
               .toMap(Tag::getKey, Tag::getValue))
           .forEach((expectedKey, expectedValue) -> {
             String actualValue = id.getTag(expectedKey);
-            assertEquals(
-                expectedValue,
-                actualValue,
-                () -> {
-                  return String
-                      .format("%s/%s tag %s does not have the expected value",
-                          expectedMeterType
-                              .getSimpleName(),
-                          expectedMeterName,
-                          expectedKey);
-                });
+            Assertions
+                .assertEquals(
+                    expectedValue,
+                    actualValue,
+                    () -> {
+                      return String
+                          .format("%s/%s tag %s does not have the expected value",
+                              expectedMeterType
+                                  .getSimpleName(),
+                              expectedMeterName,
+                              expectedKey);
+                    });
           });
     }
   }
@@ -248,25 +249,5 @@ public abstract class AbstractMeterTest {
         .map(Tag::getKey)
         .collect(Collectors
             .toSet());
-  }
-
-  void assertEquals(Object expected, Object actual) {
-    assertEquals(expected, actual, null);
-  }
-
-  void assertEquals(
-      Object expected,
-      Object actual,
-      Supplier<String> messageSupplier) {
-    String expectedStr = String.valueOf(expected);
-    String actualStr = String.valueOf(actual);
-    if (!actualStr
-        .matches(expectedStr)) {
-      Assertions.fail(Optional
-          .ofNullable(messageSupplier)
-          .orElse(() -> String
-              .format("expected: %s, actual: %s", expectedStr, actualStr))
-          .get());
-    }
   }
 }
